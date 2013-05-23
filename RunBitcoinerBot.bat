@@ -1,0 +1,1 @@
+Powershell.exe .\Exec\BitcoinerBot.ps1
