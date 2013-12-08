@@ -9,6 +9,22 @@
 #####################################################################################
 import os
 import logging
+import requests
+
+# Boilerplate
+def fetch_json_data(url):
+	r = requests.get(url)
+	return r.json()
 
 def fetch_data():
-	print "Fetch data here"
+
+
+#f = open('myfile','w')
+#f.write('hi there\n')
+# python will convert \n to os.linesep
+#f.close()
+# you can omit in most cases as the destructor will call if
+
+#import requests
+#r = requests.get('someurl')
+#print r.json()
