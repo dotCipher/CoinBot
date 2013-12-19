@@ -79,29 +79,33 @@ def execute_modules():
       print "iteration"
       # TODO: Figure out syntax for executing strings as files in python
       #eval(files)
-
+#####################################################################################
+# Usage sub-function
+#####################################################################################
+def invalidUsage():
+    print "Invalid usage, must provide at least one flag"
+    print "(Run with -h for more info)"
 #####################################################################################
 # Main function
 #####################################################################################
 def main():
   # Parse CLI
-  parser = OptionParser(usage="usage: %prog [options]",
+  parser = OptionParser(usage="Usage: %prog [options]",
     version="%prog 1.0")
-  parser.add_option("-e", "--execute-modules",
-    action="store_true", dest="execute_modules",
+  parser.add_option("-e", "--exec-modules",
+    action="store_true", dest="exec_modules",
     default=False, help="Execute modules")
-  parser.add_option("-f", "--fetch-data",
-    action="store_true", dest="fetch_data",
-    default=False, help="Fetch market data")
+  parser.add_option("-s", "--start-scraper",
+    action="store_true", dest="start_scraper",
+    default=False, help="Starts the scraper")
   (options, args) = parser.parse_args()
+  # Initialize proper use bool
+  isValid = False
 
   # Run all modules
-  if(options.execute_modules is True):
+  if(options.exec_modules is True):
     execute_modules()
-
-  # Fetch all market data
-  if(options.fetch_data is True):
-    cbScraper.fetch_data()
+    isValid = True
 
   # Initialize Logging
   # TODO: Migrate to module specific call
@@ -110,6 +114,14 @@ def main():
   # Grab configurations
   # TODO: Migrate to module specific call
   #config = cbConfig.getConfig(_CORE_CONFIG_FILE)
+
+  if(options.start_scraper is True):
+    cbScraper.start_scraper()
+    isValid = True
+
+  if((options.exec_modules is False)
+    and (options.start_scraper is False)):
+    invalidUsage()
 
 #####################################################################################
 # Main function call
