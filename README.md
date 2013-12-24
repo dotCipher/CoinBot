@@ -39,7 +39,7 @@ __OR__
 
 	./CoinBot.py --execute-module <Module>
 
-### 2) Scraper
+### 2) Plugin: Scraper
 
 CoinBot also supports the dynamic use of web scraping a multitude of sites that present live data on all e-currencies.
 
