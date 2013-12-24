@@ -4,14 +4,14 @@
 # Purpose: An 'Ub3r31337' way to auto manage digital currencies
 # Constraints: Must be run using Python
 # Syntax: ./CoinBot.py
-####################################################################################
+###############################################################################
 # Import standard libraries
-#####################################################################################
+###############################################################################
 from optparse import OptionParser
 import os, sys, inspect
-####################################################################################
+###############################################################################
 # Global variables
-#####################################################################################
+###############################################################################
 ########### Static Location variables ###########
 _FILE_FRAME=os.path.split(inspect.getfile( inspect.currentframe() ))
 for element in _FILE_FRAME:
@@ -39,55 +39,55 @@ _CORE_LOG_NAME="CB_Core.log"
 _CORE_LOG_FILE=os.path.join(_LOGS_DIR,_CORE_LOG_NAME)
 _CORE_CONFIG_NAME="CB_Core.log"
 _CORE_CONFIG_FILE=os.path.join(_SETUP_DIR,_CORE_CONFIG_NAME)
-#####################################################################################
+###############################################################################
+# Adding project to python path
+###############################################################################
+def addToPath(fileOrDir):
+  toAdd = os.path.realpath(os.path.abspath(fileOrDir))
+  if toAdd not in sys.path:
+    sys.path.insert(0, toAdd)
+###############################################################################
 # Dynamically build project path into the system
-#####################################################################################
+###############################################################################
 # Append main folder
-cmd_folder = os.path.realpath(os.path.abspath(_SCRIPT_FILE))
-if cmd_folder not in sys.path:
-   sys.path.insert(0, cmd_folder)
+addToPath(_MAIN_DIR)
 # Append sub-folders
-modules_subfolder = os.path.realpath(os.path.abspath(os.path.join(_SCRIPT_FILE,_MODULES_FOLDER_NAME)))
-if modules_subfolder not in sys.path:
-  sys.path.insert(0, modules_subfolder)
-libs_subfolder = os.path.realpath(os.path.abspath(os.path.join(_SCRIPT_FILE,_LIB_FOLDER_NAME)))
-if libs_subfolder not in sys.path:
-  sys.path.insert(0, libs_subfolder)
-plugins_subfolder = os.path.realpath(os.path.abspath(os.path.join(_SCRIPT_FILE,_PLUGINS_FOLDER_NAME)))
-if plugins_subfolder not in sys.path:
-  sys.path.insert(0, plugins_subfolder)
-#####################################################################################
-# Import all project Libraries/Modules/Plugins
-#####################################################################################
+addToPath(os.path.join(_MAIN_DIR,_MODULES_FOLDER_NAME))
+addToPath(os.path.join(_MAIN_DIR,_LIB_FOLDER_NAME))
+addToPath(os.path.join(_MAIN_DIR,_PLUGINS_FOLDER_NAME))
+###############################################################################
+# Project imports
+###############################################################################
 import Libs.CoinBot_Config as cbConfig
 import Libs.CoinBot_Logging as cbLogger
 import Plugins.Scraper.CoinBot_Scraper as cbScraper
-####################################################################################
-# Core Module functions
-#####################################################################################
+###############################################################################
+# Core functions
+###############################################################################
 # Gets a List of CoinBot Modules
 # Returns: List<Module> OR None (Object)
 # TODO: Move logic to new function for getting list
 def execute_modules():
-  if not os.path.exists(_MODULES_DIR):
-    os.makedirs(os.path.dirname(os.path.realpath(_MODULES_DIR)))
+  hasPath = ensureDirPath(_MODULES_DIR)
+  if not hasPath:
     return None
-  os.chdir(_MODULES_DIR)
-  for files in os.listdir("."):
-    if (files.endswith(".py")) and (not(files == "__init__.py")):
-      print files
-      print "iteration"
-      # TODO: Figure out syntax for executing strings as files in python
-      #eval(files)
-#####################################################################################
+  else:
+    os.chdir(_MODULES_DIR)
+    for files in os.listdir("."):
+      if (files.endswith(".py")) and (not(files == "__init__.py")):
+        print files
+        print "iteration"
+        # TODO: Figure out syntax for executing strings as files in python
+        #eval(files)
+###############################################################################
 # Usage sub-function
-#####################################################################################
+###############################################################################
 def invalidUsage():
     print "Invalid usage, must provide at least one flag"
     print "(Run with -h for more info)"
-#####################################################################################
+###############################################################################
 # Main function
-#####################################################################################
+###############################################################################
 def main():
   # Parse CLI
   parser = OptionParser(usage="Usage: %prog [options]",
@@ -104,6 +104,7 @@ def main():
 
   # Run all modules
   if(options.exec_modules is True):
+    print "NOTE: Feature not fully implemented yet."
     execute_modules()
     isValid = True
 
@@ -123,9 +124,9 @@ def main():
     and (options.start_scraper is False)):
     invalidUsage()
 
-#####################################################################################
+###############################################################################
 # Main function call
-#####################################################################################
+###############################################################################
 # Namespace check of core program
 if __name__ == '__main__':
     main()

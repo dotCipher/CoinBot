@@ -4,24 +4,29 @@
 # Purpose: A Logger module for custom logging of CoinBot
 # Constraints: Must be imported into a main namespace Python file
 # Usage: import CoinBot_Logging
-#####################################################################################
+###############################################################################
 # Imports
-#####################################################################################
+###############################################################################
 import os
 import logging
-#####################################################################################
+###############################################################################
 # Logging system functions
-#####################################################################################
+###############################################################################
 # Initializes the logging system
 # Returns: (void)
 def setLoggingTo(logfilePath):
-  if not os.path.exists(logfilePath):
-    if not os.path.exists(os.path.dirname(os.path.realpath(logfilePath))):
-      os.makedirs(os.path.dirname(os.path.realpath(logfilePath)))
-  logging.basicConfig(level=logging.DEBUG, 
-    filename=logfilePath, filemode='a+',
-    format='[%(asctime)s_%(msecs)d]:%(levelname)s:%(message)s', 
-    datefmt='%m/%d/%Y_%H:%M:%S')
+  if logfilePath is "stdout":
+    logging.basicConfig(level=logging.DEBUG,
+      format='[%(asctime)s_%(msecs)d]:%(levelname)s:%(message)s',
+      datefmt='%m/%d/%Y_%H:%M:%S')
+  else:
+    if not os.path.exists(logfilePath):
+      if not os.path.exists(os.path.dirname(os.path.realpath(logfilePath))):
+        os.makedirs(os.path.dirname(os.path.realpath(logfilePath)))
+    logging.basicConfig(level=logging.DEBUG, 
+      filename=logfilePath, filemode='a+',
+      format='[%(asctime)s_%(msecs)d]:%(levelname)s:%(message)s', 
+      datefmt='%m/%d/%Y_%H:%M:%S')
 
 # Wrapper for logging level = DEBUG
 # Returns: (void)
