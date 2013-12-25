@@ -14,9 +14,10 @@ import os
 # Gets the time and date
 # Create directory if none exist
 def ensureDirPath(path):
-  if not os.path.exists(path):
-    os.makedirs(os.path.dirname(
-      os.path.realpath(path)))
-    return False
-  else:
-    return True
+	if not os.path.exists(path):
+		print "Directory does not exist"
+		print path
+		os.makedirs(path)
+		return False
+	else:
+		return True

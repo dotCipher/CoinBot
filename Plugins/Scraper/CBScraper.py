@@ -70,31 +70,31 @@ def runFunction(interval, iters, worker_func):
 # API Calls: Vircurex
 ###############################################################################
 # API Call Wrapper: Vircurex
-def apiVircurex(callstr):
+def callVircurex(callstr):
 	url = "https://vircurex.com/api/"
 	apiCall = url + callstr
-	return requests.get(apiCall).json()
+	return str(requests.get(apiCall).json)
 
 # API Call: Vircurex - get_info_for_currency
 def getInfoForCurrency():
 	call = "get_info_for_currency.json"
-	return apiCall_Vircurex(call)
+	return callVircurex(call)
 # API Call: Vircurex - get_lowest_ask
 def getLowestAsk(base, alt):
 	call = "get_lowest_ask.json?base=" + base + "&alt=" + alt
-	return apiCall_Vircurex(call)
+	return callVircurex(call)
 # API Call: Vircurex - get_highest_bid
 def getHighestBid(base, alt):
 	call = "get_highest_bid.json?base=" + base + "&alt=" + alt
-	return apiCall_Vircurex(call)
+	return callVircurex(call)
 # API Call: Vircurex - get_last_trade
 def getLastTrade(base, alt):
 	call = "get_last_trade.json?base=" + base + "&alt=" + alt
-	return apiCall_Vircurex(call)
+	return callVircurex(call)
 # API Call: Vircurex - get_volume
 def getVolume(base, alt):
 	call = "get_volume.json?base=" + base + "&alt=" + alt
-	return apiCall_Vircurex(call)
+	return callVircurex(call)
 
 # API Caller for: Vircurex
 def execVircurex():
@@ -102,33 +102,41 @@ def execVircurex():
 	# Check base output directory
 	baseDir = getOutputDirectory()
 	apiDir = os.path.join(baseDir, folderName)
-	dateDir = os.path.join(apiDir, getDate())
-	# Execute get of summary
+	# Execute get of summary and write out
 	summary = getInfoForCurrency()
-	# Outline currencies
-	currencies = ['BTC', 'FTC', 'LTC', 'USD']
-	# Execute all api calls with all pairs
-	i = 0
-	while i < len(currencies):
-		base = currencies[i]
-		# Build alt list
-		j = 0
-		alt_list = []
-		while j < len(currencies):
-			if not currencies[i] == currencies[j]:
-				alt_list.append(currencies[j])
-			j += 1
-		i += 1
-		# Iterate through alt list with bases
-		j = 0
-		while j < len(alt_list):
-			alt = alt_list[j]
-			low = getLowestAsk(base, alt[j])
-			high = getHighestBid(base, alt[j])
-			trade = getLastTrade(base, alt[j])
-			volumne = getVolume(base, alt[j])
-			# TODO: Do stuff with each
-			j += 1
+	sDir = os.path.join(apiDir, "getInfoForCurrency")
+	sDateDir = os.path.join(sDir, getDate())
+	cbUtils.ensureDirPath(sDateDir)
+	timeFileName = getTime() + ".txt"
+	sTimeFile = os.path.join(sDateDir, timeFileName)
+	f = open(sTimeFile, 'w')
+	f.write(summary)
+	f.close()
+
+	# # Outline currencies
+	# currencies = ['BTC', 'FTC', 'LTC', 'USD']
+	# # Execute all api calls with all pairs
+	# i = 0
+	# while i < len(currencies):
+	# 	base = currencies[i]
+	# 	# Build alt list
+	# 	j = 0
+	# 	alt_list = []
+	# 	while j < len(currencies):
+	# 		if not currencies[i] == currencies[j]:
+	# 			alt_list.append(currencies[j])
+	# 		j += 1
+	# 	i += 1
+	# 	# Iterate through alt list with bases
+	# 	j = 0
+	# 	while j < len(alt_list):
+	# 		alt = alt_list[j]
+	# 		low = getLowestAsk(base, alt[j])
+	# 		high = getHighestBid(base, alt[j])
+	# 		trade = getLastTrade(base, alt[j])
+	# 		volumne = getVolume(base, alt[j])
+	# 		# TODO: Do stuff with each
+	# 		j += 1
 ###############################################################################
 # Main Call
 ###############################################################################
@@ -155,11 +163,4 @@ def start_scraper():
 	# from running:
 	#  scheduleFunction(60, execCalls_Vircurex)
 	print "In Scraper:"
-	runFunction(30, 2, test)
-
-
-#f = open('myfile','w')
-#f.write('hi there\n')
-# python will convert \n to os.linesep
-#f.close()
-# you can omit in most cases as the destructor will call if
+	runFunction(30, 2, execVircurex)
