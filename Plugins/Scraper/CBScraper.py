@@ -14,12 +14,10 @@ import requests, threading, time
 ###############################################################################
 import Libs.CBConfig as cbConfig
 import Libs.CBUtils as cbUtils
+import Libs.CBLogging as cbLogging
 ###############################################################################
 # Global variables
 ###############################################################################
-_DATETIME_FORMAT='%m/%d/%Y_%H:%M:%S'
-_DATE_FORMAT='%m-%d-%Y'
-_TIME_FORMAT='%H_%M_%S'
 ########### Static Location variables ###########
 _FILE_FRAME=os.path.split(inspect.getfile( inspect.currentframe() ))
 for element in _FILE_FRAME:
@@ -41,13 +39,6 @@ def getOutputDirectory():
 		for option in config.options(section):
 			if option == "output-directory":
 				return config.get(section, option)
-# Time and date
-def getTime():
-	return time.strftime(_TIME_FORMAT)
-def getDate():
-	return time.strftime(_DATE_FORMAT)
-def getDateTime():
-	return time.strftime(_DATETIME_FORMAT)
 ###############################################################################
 # Thread scheduling functions
 ###############################################################################
@@ -102,6 +93,10 @@ def execVircurex():
 	# Check base output directory
 	baseDir = getOutputDirectory()
 	apiDir = os.path.join(baseDir, folderName)
+	# Set logging
+	cbLogging.setLoggingTo('stdout')
+	cbLogging.logInfo("API Directory at: " + apiDir)
+	
 	# Execute get of summary and write out
 	summary = getInfoForCurrency()
 	sDir = os.path.join(apiDir, "getInfoForCurrency")
@@ -112,6 +107,9 @@ def execVircurex():
 	f = open(sTimeFile, 'w')
 	f.write(summary)
 	f.close()
+
+	# Write output for getInfoForCurrency
+	cbLogging.logInfo("")
 
 	# # Outline currencies
 	# currencies = ['BTC', 'FTC', 'LTC', 'USD']
