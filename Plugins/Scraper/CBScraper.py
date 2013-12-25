@@ -1,23 +1,25 @@
 #!/usr/bin/python
 #####################################################################################
 # File: CoinBot_Scraper.py
-# Purpose: A Scraper module for fetching market data online for CoinBot
+# Purpose: A Scraper plugin for fetching market data online for CoinBot
 # Constraints: Must be imported into a main namespace Python file
 # Usage: import CoinBot_Scraper
 ###############################################################################
 # Import standard libraries
 ###############################################################################
-import os, sys, inspect
-import requests, threading
+import os, sys, inspect, signal
+import requests, threading, time
 ###############################################################################
 # Project imports
 ###############################################################################
-import Libs.CoinBot_Config as cbConfig
-import Libs.CoinBot_Logging as cbLogger
-import Libs.CoinBot_Utils as cbUtils
+import Libs.CBConfig as cbConfig
+import Libs.CBUtils as cbUtils
 ###############################################################################
 # Global variables
 ###############################################################################
+_DATETIME_FORMAT='%m/%d/%Y_%H:%M:%S'
+_DATE_FORMAT='%m-%d-%Y'
+_TIME_FORMAT='%H_%M_%S'
 ########### Static Location variables ###########
 _FILE_FRAME=os.path.split(inspect.getfile( inspect.currentframe() ))
 for element in _FILE_FRAME:
@@ -26,37 +28,52 @@ for element in _FILE_FRAME:
   if ".py" in element:
   	_SCRIPT_FILE = element
 _SCRIPT_PATH=os.path.join(_SCRIPT_DIR, _SCRIPT_FILE)
-# Folder Location variables
-_DATA_FOLDER_NAME = "Data"
-_DATA_DIR = os.path.join(_SCRIPT_DIR,_DATA_FOLDER_NAME)
-# API Specific directory locations
-_VIRCUREX_FOLDER_NAME = "Vircurex"
-_VIRCUREX_DIR = os.path.join(_DATA_DIR, _VIRCUREX_FOLDER_NAME)
+# Configs
+_CONFIG_NAME="CBScraperConfig.ini"
+_CONFIG_FILE=os.path.join(_SCRIPT_DIR,_CONFIG_NAME)
 ###############################################################################
-# Core Functions
+# Core functions
 ###############################################################################
-# JSON Data wrapper
-def getJSONData(url):
-	r = requests.get(url)
-	return r.json()
-# Function timing scheduler
-def scheduleFunction(interval, worker_func, iterations = 0):
-	if(iterations > 1):
-		threading.Timer(
-			interval, 
-			scheduleFunction, 
-			[interval, worker_func, 0 if iterations == 0 else iterations-1]
-		).start()
-	elif(iterations == 1):
-		worker_func()
+# Get output locations
+def getOutputDirectory():
+	config = cbConfig.getConfig(_CONFIG_FILE)
+	for section in config.sections():
+		for option in config.options(section):
+			if option == "output-directory":
+				return config.get(section, option)
+# Time and date
+def getTime():
+	return time.strftime(_TIME_FORMAT)
+def getDate():
+	return time.strftime(_DATE_FORMAT)
+def getDateTime():
+	return time.strftime(_DATETIME_FORMAT)
+###############################################################################
+# Thread scheduling functions
+###############################################################################
+# FunctionThread schedule wrapper
+# iters = -1 (run infinitely)
+def runFunction(interval, iters, worker_func):
+	if iters == -1:
+		while True:
+			worker_func()
+			time.sleep(interval)
+	elif iters >= 1:
+		while iters > 0:
+			worker_func()
+			iters -= 1
+			if iters != 0:
+				time.sleep(interval)
+			else:
+				break
 ###############################################################################
 # API Calls: Vircurex
 ###############################################################################
 # API Call Wrapper: Vircurex
-def apiCall_Vircurex(callstr):
+def apiVircurex(callstr):
 	url = "https://vircurex.com/api/"
 	apiCall = url + callstr
-	return getJSONData(apiCall)
+	return requests.get(apiCall).json()
 
 # API Call: Vircurex - get_info_for_currency
 def getInfoForCurrency():
@@ -80,10 +97,16 @@ def getVolume(base, alt):
 	return apiCall_Vircurex(call)
 
 # API Caller for: Vircurex
-def execCalls_Vircurex():
-	currencies = ['BTC', 'FTC', 'LTC', 'USD']
+def execVircurex():
+	folderName = "Vircurex"
+	# Check base output directory
+	baseDir = getOutputDirectory()
+	apiDir = os.path.join(baseDir, folderName)
+	dateDir = os.path.join(apiDir, getDate())
 	# Execute get of summary
 	summary = getInfoForCurrency()
+	# Outline currencies
+	currencies = ['BTC', 'FTC', 'LTC', 'USD']
 	# Execute all api calls with all pairs
 	i = 0
 	while i < len(currencies):
@@ -104,16 +127,23 @@ def execCalls_Vircurex():
 			high = getHighestBid(base, alt[j])
 			trade = getLastTrade(base, alt[j])
 			volumne = getVolume(base, alt[j])
+			# TODO: Do stuff with each
 			j += 1
 ###############################################################################
 # Main Call
 ###############################################################################
+def test():
+	d = getOutputDirectory()
+	base = os.path.join(d, "Test")
+	t = getTime() + ".txt"
+	tFile = os.path.join(base, t)
+	print tFile
 # Main plugin call
 def start_scraper():
-	# First check if 'data' directory exists
+	# First check if '<DIR>' output directory exists
 	# Create directory if it doesnt exist
-	#ensureDirPath(_DATA_DIR)
-	# Second check if 'data/<API> directory exists
+	#ensureDirPath(getOutputDirectory())
+	# Second check if '<DIR>/<API> directory exists
 	# Create directory if it doesnt exist
 	#ensureDirPath(_VIRCUREX_DIR)
 	# Get current time and date
@@ -125,13 +155,11 @@ def start_scraper():
 	# from running:
 	#  scheduleFunction(60, execCalls_Vircurex)
 	print "In Scraper:"
+	runFunction(30, 2, test)
+
 
 #f = open('myfile','w')
 #f.write('hi there\n')
 # python will convert \n to os.linesep
 #f.close()
 # you can omit in most cases as the destructor will call if
-
-#import requests
-#r = requests.get('someurl')
-#print r.json()

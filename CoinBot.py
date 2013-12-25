@@ -8,7 +8,7 @@
 # Import standard libraries
 ###############################################################################
 from optparse import OptionParser
-import os, sys, inspect
+import os, sys, inspect, signal
 ###############################################################################
 # Global variables
 ###############################################################################
@@ -35,20 +35,17 @@ _LOGS_DIR=os.path.join(_MAIN_DIR,_LOGS_FOLDER_NAME)
 _SCRAPER_FOLDER_NAME="Scraper"
 _SCRAPER_DIR=os.path.join(_PLUGINS_DIR, _SCRAPER_FOLDER_NAME)
 # File Location variables
-_CORE_LOG_NAME="CB_Core.log"
+_CORE_LOG_NAME="CBCore.log"
 _CORE_LOG_FILE=os.path.join(_LOGS_DIR,_CORE_LOG_NAME)
-_CORE_CONFIG_NAME="CB_Core.log"
+_CORE_CONFIG_NAME="CBConfig.ini"
 _CORE_CONFIG_FILE=os.path.join(_SETUP_DIR,_CORE_CONFIG_NAME)
 ###############################################################################
-# Adding project to python path
+# Dynamically build project path into the system
 ###############################################################################
 def addToPath(fileOrDir):
   toAdd = os.path.realpath(os.path.abspath(fileOrDir))
   if toAdd not in sys.path:
     sys.path.insert(0, toAdd)
-###############################################################################
-# Dynamically build project path into the system
-###############################################################################
 # Append main folder
 addToPath(_MAIN_DIR)
 # Append sub-folders
@@ -56,11 +53,25 @@ addToPath(os.path.join(_MAIN_DIR,_MODULES_FOLDER_NAME))
 addToPath(os.path.join(_MAIN_DIR,_LIB_FOLDER_NAME))
 addToPath(os.path.join(_MAIN_DIR,_PLUGINS_FOLDER_NAME))
 ###############################################################################
+# Signal Handler
+###############################################################################
+def signal_handler(signal, frame):
+    print '\nCtrl+C detected, exiting...'
+    sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+###############################################################################
+# Usage sub-function
+###############################################################################
+def invalidUsage():
+    print "Invalid usage, must provide at least one flag"
+    print "(Run with -h for more info)"
+###############################################################################
 # Project imports
 ###############################################################################
-import Libs.CoinBot_Config as cbConfig
-import Libs.CoinBot_Logging as cbLogger
-import Plugins.Scraper.CoinBot_Scraper as cbScraper
+import Libs.CBConfig as cbConfig
+import Libs.CBLogging as cbLogger
+import Libs.CBUtils as cbUtils
+import Plugins.Scraper.CBScraper as cbScraper
 ###############################################################################
 # Core functions
 ###############################################################################
@@ -68,7 +79,7 @@ import Plugins.Scraper.CoinBot_Scraper as cbScraper
 # Returns: List<Module> OR None (Object)
 # TODO: Move logic to new function for getting list
 def execute_modules():
-  hasPath = ensureDirPath(_MODULES_DIR)
+  hasPath = cbUtils.ensureDirPath(_MODULES_DIR)
   if not hasPath:
     return None
   else:
@@ -79,12 +90,6 @@ def execute_modules():
         print "iteration"
         # TODO: Figure out syntax for executing strings as files in python
         #eval(files)
-###############################################################################
-# Usage sub-function
-###############################################################################
-def invalidUsage():
-    print "Invalid usage, must provide at least one flag"
-    print "(Run with -h for more info)"
 ###############################################################################
 # Main function
 ###############################################################################
@@ -129,4 +134,5 @@ def main():
 ###############################################################################
 # Namespace check of core program
 if __name__ == '__main__':
-    main()
+  main()
+

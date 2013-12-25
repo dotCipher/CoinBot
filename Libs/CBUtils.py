@@ -11,6 +11,7 @@ import os
 ####################################################################################
 # Utilities
 ####################################################################################
+# Gets the time and date
 # Create directory if none exist
 def ensureDirPath(path):
   if not os.path.exists(path):
