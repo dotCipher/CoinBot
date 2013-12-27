@@ -8,6 +8,7 @@
 # Import standard libraries
 ###############################################################################
 import os, sys, inspect, signal
+import simplejson as json
 import requests, threading, time
 ###############################################################################
 # Project imports
@@ -39,6 +40,29 @@ def getOutputDirectory():
 		for option in config.options(section):
 			if option == "output-directory":
 				return config.get(section, option)
+# Writes an API call to its correct file
+def writeCallOutput(api, title, output):
+	# Output to filename of date in folder tree of:
+	#  'data/<API_LOC>/<API_CALL>/<date>/<time>.json'
+	#  ie. 'data/Vircurex/getLowestAsk/12-3-2013/4_20_PM.json'
+	#  or  'data/Vircurex/getHighestBid_BTC-FTC/12-4-2013/4_20_PM.json'
+	# Set logging
+	cbLogging.setLoggingTo('stdout')
+	# Build dir vars
+	baseDir = getOutputDirectory()
+	apiDir = os.path.join(baseDir, api)
+	callDir = os.path.join(apiDir, title)
+	callDateDir = os.path.join(callDir, cbUtils.getDate())
+	# Check output dir
+	cbUtils.ensureDirPath(callDateDir)
+	# Build output file in dir
+	timeFileName = cbUtils.getTime() + ".txt"
+	callTimeFile = os.path.join(callDateDir, timeFileName)
+	# Write out to file + log
+	f = open(callTimeFile, 'w')
+	f.write(output)
+	f.close()
+	cbLogging.logInfo(title + " written in " + callTimeFile)
 ###############################################################################
 # Thread scheduling functions
 ###############################################################################
@@ -64,7 +88,7 @@ def runFunction(interval, iters, worker_func):
 def callVircurex(callstr):
 	url = "https://vircurex.com/api/"
 	apiCall = url + callstr
-	return str(requests.get(apiCall).json)
+	return json.dumps(requests.get(apiCall).json)
 
 # API Call: Vircurex - get_info_for_currency
 def getInfoForCurrency():
@@ -89,76 +113,63 @@ def getVolume(base, alt):
 
 # API Caller for: Vircurex
 def execVircurex():
-	folderName = "Vircurex"
-	# Check base output directory
-	baseDir = getOutputDirectory()
-	apiDir = os.path.join(baseDir, folderName)
-	# Set logging
-	cbLogging.setLoggingTo('stdout')
-	cbLogging.logInfo("API Directory at: " + apiDir)
-	
+	API_NAME = "Vircurex"
 	# Execute get of summary and write out
-	summary = getInfoForCurrency()
-	sDir = os.path.join(apiDir, "getInfoForCurrency")
-	sDateDir = os.path.join(sDir, getDate())
-	cbUtils.ensureDirPath(sDateDir)
-	timeFileName = getTime() + ".txt"
-	sTimeFile = os.path.join(sDateDir, timeFileName)
-	f = open(sTimeFile, 'w')
-	f.write(summary)
-	f.close()
-
-	# Write output for getInfoForCurrency
-	cbLogging.logInfo("")
-
-	# # Outline currencies
-	# currencies = ['BTC', 'FTC', 'LTC', 'USD']
-	# # Execute all api calls with all pairs
-	# i = 0
-	# while i < len(currencies):
-	# 	base = currencies[i]
-	# 	# Build alt list
-	# 	j = 0
-	# 	alt_list = []
-	# 	while j < len(currencies):
-	# 		if not currencies[i] == currencies[j]:
-	# 			alt_list.append(currencies[j])
-	# 		j += 1
-	# 	i += 1
-	# 	# Iterate through alt list with bases
-	# 	j = 0
-	# 	while j < len(alt_list):
-	# 		alt = alt_list[j]
-	# 		low = getLowestAsk(base, alt[j])
-	# 		high = getHighestBid(base, alt[j])
-	# 		trade = getLastTrade(base, alt[j])
-	# 		volumne = getVolume(base, alt[j])
-	# 		# TODO: Do stuff with each
-	# 		j += 1
+	writeCallOutput(
+		API_NAME,
+		"getInfoForCurrency",
+		getInfoForCurrency()
+	)
+	# Outline currencies
+	currencies = ['BTC', 'FTC', 'LTC', 'USD']
+	# Execute all api calls with all pairs
+	i = 0
+	while i < len(currencies):
+		base = currencies[i]
+		# Build alt list
+		j = 0
+		alt_list = []
+		while j < len(currencies):
+			if not currencies[i] == currencies[j]:
+				alt_list.append(currencies[j])
+			j += 1
+		i += 1
+		# Iterate through alt list with bases
+		j = 0
+		while j < len(alt_list):
+			alt = alt_list[j]
+			# getLowestAsk
+			writeCallOutput(
+				API_NAME,
+				"getLowestAsk_" + base + "-" + alt[j],
+				getLowestAsk(base, alt)
+			)
+			# getHighestBid
+			writeCallOutput(
+				API_NAME,
+				"getHighestBid_" + base + "-" + alt[j],
+				getHighestBid(base, alt)
+			)
+			# getLastTrade
+			writeCallOutput(
+				API_NAME,
+				"getLastTrade_" + base + "-" + alt[j],
+				getLastTrade(base, alt)
+			)
+			# getVolume
+			writeCallOutput(
+				API_NAME,
+				"getVolume_" + base + "-" + alt[j],
+				getVolume(base, alt)
+			)
+			j += 1
 ###############################################################################
-# Main Call
+# Main Calls
 ###############################################################################
-def test():
-	d = getOutputDirectory()
-	base = os.path.join(d, "Test")
-	t = getTime() + ".txt"
-	tFile = os.path.join(base, t)
-	print tFile
+# Register all executions in loop
+def scraperLoop():
+	execVircurex()
 # Main plugin call
 def start_scraper():
-	# First check if '<DIR>' output directory exists
-	# Create directory if it doesnt exist
-	#ensureDirPath(getOutputDirectory())
-	# Second check if '<DIR>/<API> directory exists
-	# Create directory if it doesnt exist
-	#ensureDirPath(_VIRCUREX_DIR)
-	# Get current time and date
-	# TODO
-	# Output to filename of date in folder tree of:
-	#  'data/<API_LOC>/<API_CALL>/<date>/<time>.json'
-	#  ie. 'data/Vircurex/getLowestAsk/12-3-2013/4_20_PM.json'
-	#  or  'data/Vircurex/getHighestBid_BTC-FTC/12-4-2013/4_20_PM.json'
-	# from running:
-	#  scheduleFunction(60, execCalls_Vircurex)
-	print "In Scraper:"
-	runFunction(30, 2, execVircurex)
+	# Run all registered scrapers
+	runFunction(60, -1, scraperLoop)
