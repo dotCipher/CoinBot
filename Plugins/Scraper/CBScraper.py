@@ -29,7 +29,10 @@ for element in _FILE_FRAME:
 _SCRIPT_PATH=os.path.join(_SCRIPT_DIR, _SCRIPT_FILE)
 # Configs
 _CONFIG_NAME="CBScraperConfig.ini"
-_CONFIG_FILE=os.path.join(_SCRIPT_DIR,_CONFIG_NAME)
+_CONFIG_FILE=os.path.join(_SCRIPT_DIR, _CONFIG_NAME)
+# Apis
+_APIS_NAME = "Apis"
+_APIS_DIR = os.path.join(_SCRIPT_DIR, _APIS_NAME)
 ###############################################################################
 # Core functions
 ###############################################################################
@@ -163,6 +166,18 @@ def execVircurex():
 				getVolume(base, alt)
 			)
 			j += 1
+
+# Read all API config files
+def readApis():
+	hasPath = cbUtils.ensureDirPath(_APIS_DIR)
+	if not hasPath:
+		return None
+  else:
+    os.chdir(_APIS_DIR)
+    for files in os.listdir("."):
+      if (files.endswith(".ini")) and (not(files == "__init__.py")):
+        print files
+        print "iteration"
 ###############################################################################
 # Main Calls
 ###############################################################################
