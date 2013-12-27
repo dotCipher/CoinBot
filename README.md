@@ -43,12 +43,19 @@ __OR__
 
 CoinBot also supports the dynamic use of web scraping a multitude of sites that present live data on all e-currencies.
 
+__Before you execute the scraper__ make sure you verify that the variable of 'output-directory' within __Plugins/Scraper/CBScraperConfig.ini__ is correctly set to an output directory that you wish to use.
+
+#### Plugin Execution
+
+To start the scraper run the following:
+
+	./CoinBot.py -s
+
 ## TODO
 
-- Update Logger to be more verbose for all types of logging
-- Finish implementation of Scraper
 - Implement main menu for CoinBot
 - Compile a list of viable faucets for use
+- (See issue list for more)
 
 ## Author
 
