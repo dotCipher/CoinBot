@@ -194,12 +194,44 @@ def processAPIConfigs(apiConfigList):
 		apiUrl = apiConfig.get("CORE", "url")
 		apiOutdir = apiConfig.get("CORE", "outdir")
 		apiCurrs = apiConfig.get("CORE", "currs").split('\n')
-		apiLowercase = apiConfig.get("CORE", "flc")
 		# API values
 		apiCalls = apiConfig.get("API", "calls").split('\n')
-		print apiCalls
-		print apiCurrs
-#def executeAPICall(apiName, callStr, output, interval):
+		callList = []
+		# Build call list
+		for call in apiCalls:
+			if hasScrapex(call):
+				# Build call string by replacing with Scrapex
+				i = 0
+				while i < len(apiCurrs):
+					base = apiCurrs[i]
+					j = 0
+					alt_list = []
+					while j < len(apiCurrs):
+						if not apiCurrs[i] == apiCurrs[j]:
+							alt_list.append(apiCurrs[j])
+						j += 1
+					i += 1
+					# Iterate through alt list with bases
+					j = 0
+					while j < len(alt_list):
+						alt = alt_list[j]
+						callStr = replaceScrapex(call, base, alt)
+						callList.append(apiUrl + callStr)
+						j += 1
+			else:
+				callList.append(apiUrl + call)
+		print callList
+def replaceScrapex(string, base, alt):
+	baseRepl = string.replace("{BASE}", base)
+	altRepl = baseRepl.replace("{ALT}", alt)
+	return altRepl
+def hasScrapex(string):
+	scrapex = ["{BASE}", "{ALT}"]
+	for exp in scrapex:
+		if exp in string:
+			return True
+	return False
+#def executeAPICall(apiName, callStr, outdir):
 #############################################
 ###############################################################################
 # Main Calls
