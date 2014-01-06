@@ -144,47 +144,75 @@ def execVircurex():
 			# getLowestAsk
 			writeCallOutput(
 				API_NAME,
-				"getLowestAsk_" + base + "-" + alt[j],
+				"getLowestAsk_" + base + "-" + alt,
 				getLowestAsk(base, alt)
 			)
 			# getHighestBid
 			writeCallOutput(
 				API_NAME,
-				"getHighestBid_" + base + "-" + alt[j],
+				"getHighestBid_" + base + "-" + alt,
 				getHighestBid(base, alt)
 			)
 			# getLastTrade
 			writeCallOutput(
 				API_NAME,
-				"getLastTrade_" + base + "-" + alt[j],
+				"getLastTrade_" + base + "-" + alt,
 				getLastTrade(base, alt)
 			)
 			# getVolume
 			writeCallOutput(
 				API_NAME,
-				"getVolume_" + base + "-" + alt[j],
+				"getVolume_" + base + "-" + alt,
 				getVolume(base, alt)
 			)
 			j += 1
-
+#############################################
+# NOTE: These methods are still in development
 # Read all API config files
-def readApis():
+def readApiConfigs():
 	hasPath = cbUtils.ensureDirPath(_APIS_DIR)
 	if not hasPath:
 		return None
-  else:
-    os.chdir(_APIS_DIR)
-    for files in os.listdir("."):
-      if (files.endswith(".ini")) and (not(files == "__init__.py")):
-        print files
-        print "iteration"
+	else:
+		fileList = []
+		apiConfigs = []
+		os.chdir(_APIS_DIR)
+		# Get all API configs
+		for f in os.listdir("."):
+			if (f.endswith(".ini")) and (not(f == "Template.ini")):
+				fileList.append(f)
+		# Parse all API configs
+		for f in fileList:
+			config = cbConfig.getConfig(f)
+			apiConfigs.append(config)
+		return apiConfigs
+# # Processes all API Config objects given in the list
+def processAPIConfigs(apiConfigList):
+	for apiConfig in apiConfigList:
+		# CORE values
+		apiName = apiConfig.get("CORE", "name")
+		apiUrl = apiConfig.get("CORE", "url")
+		apiOutdir = apiConfig.get("CORE", "outdir")
+		apiCurrs = apiConfig.get("CORE", "currs").split('\n')
+		apiLowercase = apiConfig.get("CORE", "flc")
+		# API values
+		apiCalls = apiConfig.get("API", "calls").split('\n')
+		print apiCalls
+		print apiCurrs
+#def executeAPICall(apiName, callStr, output, interval):
+#############################################
 ###############################################################################
 # Main Calls
 ###############################################################################
-# Register all executions in loop
+# All executions will be registered in this loop
 def scraperLoop():
-	execVircurex()
+	#execVircurex()
+	apiConfigs = readApiConfigs()
+	processAPIConfigs(apiConfigs)
 # Main plugin call
 def start_scraper():
 	# Run all registered scrapers
+	cbLogging.setLoggingTo('stdout')
+	cbLogging.logInfo("Scraper starting, press Ctrl+C to stop...")
+	# Run each function every minute
 	runFunction(60, -1, scraperLoop)

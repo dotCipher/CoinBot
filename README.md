@@ -43,13 +43,21 @@ __OR__
 
 CoinBot also supports the dynamic use of web scraping a multitude of sites that present live data on all e-currencies.
 
-__Before you execute the scraper__ make sure you verify that the variable of 'output-directory' within __Plugins/Scraper/CBScraperConfig.ini__ is correctly set to an output directory that you wish to use.
+__Before you execute the Scraper__ make sure you verify all of the API configs within the _Scraper/Apis_ directory.  
 
 #### Plugin Execution
 
 To start the scraper run the following:
 
 	./CoinBot.py -s
+
+#### API Configuration
+
+The scraper is fitted with a way to dynamically parse the API config files for easy addition/modification/removal of any given API call.
+
+The formatting used in the config files is outlined in the _Scraper/Apis/Template.ini_ file.  All APIs that are outlined in _Scraper/Apis_ (except Template.ini) are executed based on their contents.
+
+For further information please refer to the _Scraper/Apis/Template.ini_ file.
 
 ## TODO
 
@@ -59,4 +67,5 @@ To start the scraper run the following:
 
 ## Author
 
-* User : @dot_Cipher
+dot_Cipher:
+<a href="http://www.null-sec.net">Site</a>

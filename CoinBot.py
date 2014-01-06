@@ -96,7 +96,7 @@ def execute_modules():
 def main():
   # Parse CLI
   parser = OptionParser(usage="Usage: %prog [options]",
-    version="%prog 1.0")
+    version="%prog 0.5")
   parser.add_option("-e", "--exec-modules",
     action="store_true", dest="exec_modules",
     default=False, help="Execute modules")
