@@ -25,6 +25,10 @@ def getDate():
 def getDateTime():
 	return time.strftime(_DATETIME_FORMAT)
 
+# Converts string to file/folder friendly name
+def scrubFilename(string):
+	return re.sub(r'[/\\:*?"<>|]', '', string)
+
 # Create directory if none exist
 def ensureDirPath(path):
 	if not os.path.exists(path):

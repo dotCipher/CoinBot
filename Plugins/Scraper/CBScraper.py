@@ -7,7 +7,7 @@
 ###############################################################################
 # Import standard libraries
 ###############################################################################
-import os, sys, inspect, signal
+import os, sys, inspect, signal, re
 import simplejson as json
 import requests, threading, time
 ###############################################################################
@@ -36,15 +36,8 @@ _APIS_DIR = os.path.join(_SCRIPT_DIR, _APIS_NAME)
 ###############################################################################
 # Core functions
 ###############################################################################
-# Get output locations
-def getOutputDirectory():
-	config = cbConfig.getConfig(_CONFIG_FILE)
-	for section in config.sections():
-		for option in config.options(section):
-			if option == "output-directory":
-				return config.get(section, option)
 # Writes an API call to its correct file
-def writeCallOutput(api, title, output):
+def writeCallOutput(apiName, outdir, callStr, callOutput):
 	# Output to filename of date in folder tree of:
 	#  'data/<API_LOC>/<API_CALL>/<date>/<time>.json'
 	#  ie. 'data/Vircurex/getLowestAsk/12-3-2013/4_20_PM.json'
@@ -52,8 +45,8 @@ def writeCallOutput(api, title, output):
 	# Set logging
 	cbLogging.setLoggingTo('stdout')
 	# Build dir vars
-	baseDir = getOutputDirectory()
-	apiDir = os.path.join(baseDir, api)
+	title = cbUtils.scrubFilename(callStr)
+	apiDir = os.path.join(outdir, apiName)
 	callDir = os.path.join(apiDir, title)
 	callDateDir = os.path.join(callDir, cbUtils.getDate())
 	# Check output dir
@@ -63,7 +56,7 @@ def writeCallOutput(api, title, output):
 	callTimeFile = os.path.join(callDateDir, timeFileName)
 	# Write out to file + log
 	f = open(callTimeFile, 'w')
-	f.write(output)
+	f.write(callOutput)
 	f.close()
 	cbLogging.logInfo(title + " written in " + callTimeFile)
 ###############################################################################
@@ -85,89 +78,22 @@ def runFunction(interval, iters, worker_func):
 			else:
 				break
 ###############################################################################
-# API Calls: Vircurex
+# Scrapex functions
 ###############################################################################
-# API Call Wrapper: Vircurex
-def callVircurex(callstr):
-	url = "https://vircurex.com/api/"
-	apiCall = url + callstr
-	return json.dumps(requests.get(apiCall).json)
-
-# API Call: Vircurex - get_info_for_currency
-def getInfoForCurrency():
-	call = "get_info_for_currency.json"
-	return callVircurex(call)
-# API Call: Vircurex - get_lowest_ask
-def getLowestAsk(base, alt):
-	call = "get_lowest_ask.json?base=" + base + "&alt=" + alt
-	return callVircurex(call)
-# API Call: Vircurex - get_highest_bid
-def getHighestBid(base, alt):
-	call = "get_highest_bid.json?base=" + base + "&alt=" + alt
-	return callVircurex(call)
-# API Call: Vircurex - get_last_trade
-def getLastTrade(base, alt):
-	call = "get_last_trade.json?base=" + base + "&alt=" + alt
-	return callVircurex(call)
-# API Call: Vircurex - get_volume
-def getVolume(base, alt):
-	call = "get_volume.json?base=" + base + "&alt=" + alt
-	return callVircurex(call)
-
-# API Caller for: Vircurex
-def execVircurex():
-	API_NAME = "Vircurex"
-	# Execute get of summary and write out
-	writeCallOutput(
-		API_NAME,
-		"getInfoForCurrency",
-		getInfoForCurrency()
-	)
-	# Outline currencies
-	currencies = ['BTC', 'FTC', 'LTC', 'USD']
-	# Execute all api calls with all pairs
-	i = 0
-	while i < len(currencies):
-		base = currencies[i]
-		# Build alt list
-		j = 0
-		alt_list = []
-		while j < len(currencies):
-			if not currencies[i] == currencies[j]:
-				alt_list.append(currencies[j])
-			j += 1
-		i += 1
-		# Iterate through alt list with bases
-		j = 0
-		while j < len(alt_list):
-			alt = alt_list[j]
-			# getLowestAsk
-			writeCallOutput(
-				API_NAME,
-				"getLowestAsk_" + base + "-" + alt,
-				getLowestAsk(base, alt)
-			)
-			# getHighestBid
-			writeCallOutput(
-				API_NAME,
-				"getHighestBid_" + base + "-" + alt,
-				getHighestBid(base, alt)
-			)
-			# getLastTrade
-			writeCallOutput(
-				API_NAME,
-				"getLastTrade_" + base + "-" + alt,
-				getLastTrade(base, alt)
-			)
-			# getVolume
-			writeCallOutput(
-				API_NAME,
-				"getVolume_" + base + "-" + alt,
-				getVolume(base, alt)
-			)
-			j += 1
-#############################################
-# NOTE: These methods are still in development
+scrapex = ["{BASE}", "{ALT}"]
+def replaceScrapex(string, base, alt):
+	baseRepl = string.replace("{BASE}", base)
+	altRepl = baseRepl.replace("{ALT}", alt)
+	return altRepl
+def hasScrapex(string):
+	scrapex = ["{BASE}", "{ALT}"]
+	for exp in scrapex:
+		if exp in string:
+			return True
+	return False
+###############################################################################
+# API Calls
+###############################################################################
 # Read all API config files
 def readApiConfigs():
 	hasPath = cbUtils.ensureDirPath(_APIS_DIR)
@@ -186,7 +112,7 @@ def readApiConfigs():
 			config = cbConfig.getConfig(f)
 			apiConfigs.append(config)
 		return apiConfigs
-# # Processes all API Config objects given in the list
+# Processes all API Config objects given in the list
 def processAPIConfigs(apiConfigList):
 	for apiConfig in apiConfigList:
 		# CORE values
@@ -216,23 +142,20 @@ def processAPIConfigs(apiConfigList):
 					while j < len(alt_list):
 						alt = alt_list[j]
 						callStr = replaceScrapex(call, base, alt)
-						callList.append(apiUrl + callStr)
+						callList.append(callStr)
 						j += 1
 			else:
-				callList.append(apiUrl + call)
-		print callList
-def replaceScrapex(string, base, alt):
-	baseRepl = string.replace("{BASE}", base)
-	altRepl = baseRepl.replace("{ALT}", alt)
-	return altRepl
-def hasScrapex(string):
-	scrapex = ["{BASE}", "{ALT}"]
-	for exp in scrapex:
-		if exp in string:
-			return True
-	return False
-#def executeAPICall(apiName, callStr, outdir):
-#############################################
+				callList.append(call)
+		# Execute all calls from callList
+		for call in callList:
+			executeAPICall(apiName, apiUrl, call, apiOutdir)
+def executeAPICall(apiName, apiUrl, callStr, outdir):
+	# Execute api call
+	callOutput = json.dumps(
+		requests.get(apiUrl + callStr).json
+	)
+	# Write output
+	writeCallOutput(apiName, outdir, callStr, callOutput)
 ###############################################################################
 # Main Calls
 ###############################################################################
